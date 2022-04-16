@@ -1,0 +1,13 @@
+[package]
+authors = ["fys"]
+edition = "2021"
+name = "ping-rs"
+version = "0.1.0"
+# resolver = "2"
+
+[dependencies]
+netdiag = {git = "https://github.com/Fengys123/netdiag.git"}
+winping = "0.10"
+futures = "0.3.21"
+anyhow = "1.0.56"
+tokio = "1.8"
