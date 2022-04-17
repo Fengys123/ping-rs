@@ -23,7 +23,7 @@ impl UnixPinger {
         let mut res = Vec::new();
         while let Some((seq, time_spent)) = stream.next().await {
             match time_spent? {
-                Some(time_spent) => res.push((seq, Some(time_spent.as_micros()))),
+                Some(time_spent) => res.push((seq, Some(time_spent.as_millis()))),
                 None => res.push((seq, None)),
             }
             sleep(delay).await;
