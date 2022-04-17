@@ -13,9 +13,7 @@ impl UnixPinger {
         let pinger = Pinger::new(&Bind::default()).await?;
         Ok(Self { pinger })
     }
-}
 
-impl UnixPinger {
     pub async fn ping(&self, ping_param: PingParam) -> Result<PingResult> {
         let delay = ping_param.delay;
         let ping = ping_param.into();
@@ -64,7 +62,6 @@ mod tests {
         assert!(res.is_ok());
 
         let res = res.unwrap().0;
-        println!("{:?}", res);
         assert_eq!(2, res.len());
         assert!(res[0].0 == 0 && res[0].1.is_some());
         assert!(res[1].0 == 1 && res[1].1.is_some());

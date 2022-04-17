@@ -20,16 +20,30 @@ pub struct PingResult(Vec<(Seq, Option<TimeSpent>)>);
 pub struct Pinger {
     #[cfg(target_family = "unix")]
     pub inner: unix::UnixPinger,
+    #[cfg(target_family = "windows")]
+    pub inner: win::WinPinger,
 }
 
+#[cfg(target_family = "unix")]
 impl Pinger {
     pub async fn new() -> Result<Self> {
-        #[cfg(target_family = "unix")]
         let pinger = unix::UnixPinger::new().await?;
         Ok(Self { inner: pinger })
     }
 
     pub async fn ping(&self, ping_param: PingParam) -> Result<PingResult> {
+        self.inner.ping(ping_param).await
+    }
+}
+
+#[cfg(target_family = "windows")]
+impl Pinger {
+    pub async fn new() -> Result<Self> {
+        let pinger = win::WinPinger::new().await?;
+        Ok(Self { inner: pinger })
+    }
+
+    pub async fn ping(&mut self, ping_param: PingParam) -> Result<PingResult> {
         self.inner.ping(ping_param).await
     }
 }
