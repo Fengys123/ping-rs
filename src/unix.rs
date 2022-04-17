@@ -54,7 +54,7 @@ mod tests {
 
         let ping_param = PingParam {
             addr: [127, 0, 0, 1].into(),
-            count: 2,
+            count: 5,
             delay: Duration::from_secs(1),
             expire: Duration::from_secs(5),
         };
@@ -62,7 +62,7 @@ mod tests {
         assert!(res.is_ok());
 
         let res = res.unwrap().0;
-        assert_eq!(2, res.len());
+        assert_eq!(5, res.len());
         assert!(res[0].0 == 0 && res[0].1.is_some());
         assert!(res[1].0 == 1 && res[1].1.is_some());
     }
