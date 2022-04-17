@@ -63,7 +63,8 @@ mod tests {
 
         let res = res.unwrap().0;
         assert_eq!(5, res.len());
-        assert!(res[0].0 == 0 && res[0].1.is_some());
-        assert!(res[1].0 == 1 && res[1].1.is_some());
+        for i in 0..5 {
+            assert!(res[i].0 == i && res[i].1.is_some());
+        }
     }
 }
