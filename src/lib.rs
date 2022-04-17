@@ -1,5 +1,4 @@
 use anyhow::Result;
-use netdiag::Ping;
 use std::{net::IpAddr, time::Duration};
 
 #[cfg(target_family = "unix")]
@@ -12,19 +11,8 @@ pub struct PingParam {
     pub addr: IpAddr,
     pub count: usize,
     pub delay: Duration,
-    pub expiry: Duration,
+    pub expire: Duration,
 }
-
-impl From<PingParam> for Ping {
-    fn from(ping_param: PingParam) -> Self {
-        Self {
-            addr: ping_param.addr,
-            count: ping_param.count,
-            expiry: ping_param.expiry,
-        }
-    }
-}
-
 pub type Seq = usize;
 pub type TimeSpent = u128;
 pub struct PingResult(Vec<(Seq, Option<TimeSpent>)>);
@@ -35,10 +23,10 @@ pub struct Pinger {
 }
 
 impl Pinger {
-    pub async fn new() -> Self {
+    pub async fn new() -> Result<Self> {
         #[cfg(target_family = "unix")]
-        let pinger = unix::UnixPinger::new().await;
-        Self { inner: pinger }
+        let pinger = unix::UnixPinger::new().await?;
+        Ok(Self { inner: pinger })
     }
 
     pub async fn ping(&self, ping_param: PingParam) -> Result<PingResult> {
@@ -53,14 +41,16 @@ mod test {
 
     #[tokio::test]
     async fn test_ping_local() {
-        let unix_pinger = Pinger::new().await;
+        let pinger = Pinger::new().await;
+        assert!(pinger.is_ok());
+
         let ping_param = PingParam {
             addr: [127, 0, 0, 1].into(),
             count: 2,
             delay: Duration::from_secs(1),
-            expiry: Duration::from_secs(5),
+            expire: Duration::from_secs(5),
         };
-        let res = unix_pinger.ping(ping_param).await;
+        let res = pinger.unwrap().ping(ping_param).await;
         assert!(res.is_ok());
 
         let res = res.unwrap().0;

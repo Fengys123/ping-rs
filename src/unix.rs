@@ -1,18 +1,17 @@
+use crate::{PingParam, PingResult};
 use anyhow::Result;
 use futures::{pin_mut, StreamExt};
-use netdiag::{Bind, Pinger};
+use netdiag::{Bind, Ping, Pinger};
 use tokio::time::sleep;
-
-use crate::{PingParam, PingResult};
 
 pub struct UnixPinger {
     pinger: Pinger,
 }
 
 impl UnixPinger {
-    pub async fn new() -> Self {
-        let pinger = Pinger::new(&Bind::default()).await.unwrap();
-        Self { pinger }
+    pub async fn new() -> Result<Self> {
+        let pinger = Pinger::new(&Bind::default()).await?;
+        Ok(Self { pinger })
     }
 }
 
@@ -35,6 +34,16 @@ impl UnixPinger {
     }
 }
 
+impl From<PingParam> for Ping {
+    fn from(ping_param: PingParam) -> Self {
+        Self {
+            addr: ping_param.addr,
+            count: ping_param.count,
+            expiry: ping_param.expire,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{unix::UnixPinger, PingParam};
@@ -43,13 +52,15 @@ mod tests {
     #[tokio::test]
     async fn test_unix_ping() {
         let unix_pinger = UnixPinger::new().await;
+        assert!(unix_pinger.is_ok());
+
         let ping_param = PingParam {
             addr: [127, 0, 0, 1].into(),
             count: 2,
             delay: Duration::from_secs(1),
-            expiry: Duration::from_secs(5),
+            expire: Duration::from_secs(5),
         };
-        let res = unix_pinger.ping(ping_param).await;
+        let res = unix_pinger.unwrap().ping(ping_param).await;
         assert!(res.is_ok());
 
         let res = res.unwrap().0;
