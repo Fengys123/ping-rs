@@ -1,32 +1,43 @@
 use crate::{PingParam, PingResult};
 use anyhow::Result;
-use futures::{pin_mut, StreamExt};
-use netdiag::{Bind, Ping, Pinger};
-use tokio::time::sleep;
+use netdiag2::{Bind, Ping, Pinger};
+use std::sync::Arc;
 
 pub struct UnixPinger {
-    pinger: Pinger,
+    pinger: Arc<Pinger>,
 }
 
 impl UnixPinger {
     pub async fn new() -> Result<Self> {
-        let pinger = Pinger::new(&Bind::default()).await?;
+        let pinger = Arc::new(Pinger::new(&Bind::default()).await?);
         Ok(Self { pinger })
     }
 
     pub async fn ping(&self, ping_param: PingParam) -> Result<PingResult> {
-        let delay = ping_param.delay;
-        let ping = ping_param.into();
-        let stream = self.pinger.ping(&ping).enumerate();
-        pin_mut!(stream);
-
+        let PingParam {
+            addr,
+            count,
+            delay,
+            expire,
+        } = ping_param;
         let mut res = Vec::new();
-        while let Some((seq, time_spent)) = stream.next().await {
+        let mut joins = Vec::new();
+
+        for seq in 0..count {
+            let p = self.pinger.clone();
+            let join = tokio::spawn(async move {
+                tokio::time::sleep(delay * seq as u32).await;
+                let res = p.ping_once(addr, expire, seq.try_into().unwrap()).await;
+                (seq, res)
+            });
+            joins.push(join);
+        }
+        for join in joins {
+            let (seq, time_spent) = join.await?;
             match time_spent? {
                 Some(time_spent) => res.push((seq, Some(time_spent.as_millis()))),
                 None => res.push((seq, None)),
             }
-            sleep(delay).await;
         }
         Ok(PingResult(res))
     }

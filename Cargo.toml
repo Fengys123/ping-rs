@@ -13,4 +13,4 @@ tokio = { version = "1.8", features = ["full"] }
 winping = "0.10"
 
 [target.'cfg(unix)'.dependencies]
-netdiag = {git = "https://github.com/Fengys123/netdiag.git"}
+netdiag2 = {git = "https://github.com/Fengys123/netdiag.git"}

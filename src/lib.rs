@@ -73,4 +73,25 @@ mod test {
             assert!(res[i].0 == i && res[i].1.is_some());
         }
     }
+
+    #[tokio::test]
+    async fn test_ping_timeout() {
+        let pinger = Pinger::new().await;
+        assert!(pinger.is_ok());
+
+        let ping_param = PingParam {
+            addr: [244, 0, 0, 1].into(),
+            count: 5,
+            delay: Duration::from_secs(1),
+            expire: Duration::from_secs(5),
+        };
+        let res = pinger.unwrap().ping(ping_param).await;
+        assert!(res.is_ok());
+
+        let res = res.unwrap().0;
+        assert_eq!(5, res.len());
+        for i in 0..5 {
+            assert!(res[i].0 == i && res[i].1.is_none());
+        }
+    }
 }
